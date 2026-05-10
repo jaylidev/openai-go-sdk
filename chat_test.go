@@ -235,3 +235,47 @@ func TestChatBuilder_WithThinking(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestChatStream(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			t.Fatal("expected http.Flusher")
+		}
+
+		events := []string{
+			`{"choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}`,
+			`{"choices":[{"index":0,"delta":{"content":"你"}}]}`,
+			`{"choices":[{"index":0,"delta":{"content":"好"}}]}`,
+			`{"choices":[{"index":0,"delta":{"content":"！"},"finish_reason":"stop"}]}`,
+		}
+
+		for _, e := range events {
+			w.Write([]byte("data: " + e + "\n\n"))
+			flusher.Flush()
+		}
+		w.Write([]byte("data: [DONE]\n\n"))
+	}))
+	defer srv.Close()
+
+	client := NewClient(
+		WithModel(DeepSeekV4Pro),
+		WithAPIKey("sk-test"),
+		WithCustomBaseURL(srv.URL),
+	)
+
+	stream, err := client.Chat().AddUserMsg("hi").Stream(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer stream.Close()
+
+	var full string
+	for stream.Next() {
+		full += stream.Delta().Content
+	}
+
+	if full != "你好！" {
+		t.Errorf("expected '你好！', got %q", full)
+	}
+}
