@@ -123,3 +123,115 @@ func TestChatBuilder_AppendSystemPrompt(t *testing.T) {
 		t.Errorf("expected: %q, got: %q", expected, b.messages[0].Content)
 	}
 }
+
+func TestChatBuilder_WithTool(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req ChatCompletionRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		if len(req.Tools) != 1 {
+			t.Errorf("expected 1 tool, got %d", len(req.Tools))
+		}
+		if req.Tools[0].Function.Name != "get_weather" {
+			t.Errorf("expected get_weather, got %s", req.Tools[0].Function.Name)
+		}
+		json.NewEncoder(w).Encode(ChatCompletionResponse{
+			Choices: []Choice{{Message: Message{Role: RoleAssistant, Content: "ok"}, FinishReason: "stop"}},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(
+		WithModel(DeepSeekV4Pro),
+		WithAPIKey("sk-test"),
+		WithCustomBaseURL(srv.URL),
+	)
+
+	_, err := client.Chat().
+		AddUserMsg("查天气").
+		Do(context.Background(),
+			WithTool(Tool{
+				Type: "function",
+				Function: &FunctionDef{
+					Name:        "get_weather",
+					Description: "获取天气",
+					Parameters: map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"city": map[string]string{"type": "string"},
+						},
+					},
+				},
+			}),
+			WithToolChoice("auto"),
+		)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestChatBuilder_WithJSONSchema(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req ChatCompletionRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.ResponseFormat.Type != "json_schema" {
+			t.Errorf("expected json_schema, got %s", req.ResponseFormat.Type)
+		}
+		if !req.ResponseFormat.JSONSchema.Strict {
+			t.Error("expected strict: true")
+		}
+		json.NewEncoder(w).Encode(ChatCompletionResponse{
+			Choices: []Choice{{Message: Message{Role: RoleAssistant, Content: `{"answer":"ok"}`}, FinishReason: "stop"}},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(
+		WithModel(DeepSeekV4Pro),
+		WithAPIKey("sk-test"),
+		WithCustomBaseURL(srv.URL),
+	)
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"answer": map[string]string{"type": "string"},
+		},
+	}
+
+	_, err := client.Chat().
+		AddUserMsg("回答我").
+		Do(context.Background(), WithJSONSchema("test", schema, true))
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestChatBuilder_WithThinking(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req ChatCompletionRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.Thinking == nil || req.Thinking.Type != "enabled" {
+			t.Errorf("expected thinking enabled, got %v", req.Thinking)
+		}
+		json.NewEncoder(w).Encode(ChatCompletionResponse{
+			Choices: []Choice{{Message: Message{Role: RoleAssistant, Content: "result"}, FinishReason: "stop"}},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(
+		WithModel(DeepSeekV4Pro),
+		WithAPIKey("sk-test"),
+		WithCustomBaseURL(srv.URL),
+	)
+
+	_, err := client.Chat().
+		AddUserMsg("复杂问题").
+		Do(context.Background(), WithThinking(true))
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
