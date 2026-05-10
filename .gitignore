@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# Mac metadata
+._*
+
 # Editor/IDE
 # .idea/
 # .vscode/
