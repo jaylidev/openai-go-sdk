@@ -30,6 +30,12 @@ go.work.sum
 # Mac metadata
 ._*
 
+# Claude Code
+.claude/
+
+# Design docs (local only)
+docs/
+
 # Editor/IDE
 # .idea/
 # .vscode/
