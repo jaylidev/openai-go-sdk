@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	openai "github.com/xxx/openai-go-sdk"
+	openai "github.com/jaylidev/openai-go-sdk"
 )
 
 // ToolRef 工具引用（目录条目，不含完整 schema）

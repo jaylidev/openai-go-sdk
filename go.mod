@@ -1,3 +1,8 @@
-module github.com/xxx/openai-go-sdk
+module github.com/jaylidev/openai-go-sdk
 
 go 1.26.2
+
+require (
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.28.0 // indirect
+)

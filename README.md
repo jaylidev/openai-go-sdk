@@ -5,7 +5,7 @@
 ## 安装
 
 ```bash
-go get github.com/xxx/openai-go-sdk
+go get github.com/jaylidev/openai-go-sdk
 ```
 
 ## 快速开始
@@ -16,7 +16,7 @@ package main
 import (
     "context"
     "fmt"
-    openai "github.com/xxx/openai-go-sdk"
+    openai "github.com/jaylidev/openai-go-sdk"
 )
 
 func main() {
@@ -140,11 +140,11 @@ result, _ := router.Route(ctx, "我要退订单")
 
 ## 模型
 
-| 常量 | 模型名 |
-|------|--------|
-| `openai.DeepSeekV4Pro` | deepseek-v4-pro |
+| 常量                      | 模型名            |
+| ------------------------- | ----------------- |
+| `openai.DeepSeekV4Pro`    | deepseek-v4-pro   |
 | `openai.DeepSeekReasoner` | deepseek-reasoner |
-| `openai.DeepSeekChat` | deepseek-chat |
+| `openai.DeepSeekChat`     | deepseek-chat     |
 
 ## License
 

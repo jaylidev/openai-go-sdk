@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	openai "github.com/xxx/openai-go-sdk"
+	openai "github.com/jaylidev/openai-go-sdk"
 )
 
 func TestRouter_Route(t *testing.T) {

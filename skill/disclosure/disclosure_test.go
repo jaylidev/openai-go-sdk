@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	openai "github.com/xxx/openai-go-sdk"
+	openai "github.com/jaylidev/openai-go-sdk"
 )
 
 func TestCatalog_BuildSystemPrompt(t *testing.T) {

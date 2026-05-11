@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	openai "github.com/xxx/openai-go-sdk"
+	openai "github.com/jaylidev/openai-go-sdk"
 )
 
 // Route 路由定义

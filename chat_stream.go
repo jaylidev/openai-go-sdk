@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/xxx/openai-go-sdk/internal"
+	"github.com/jaylidev/openai-go-sdk/internal"
 )
 
 // streamResponse 流式响应中的单条 SSE 事件
