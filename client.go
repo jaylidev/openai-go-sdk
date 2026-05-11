@@ -3,8 +3,11 @@ package openai
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/xxx/openai-go-sdk/internal"
+	"go.uber.org/zap"
+
+	"github.com/jaylidev/openai-go-sdk/internal"
 )
 
 // Client SDK 客户端
@@ -40,10 +43,49 @@ func NewClient(opts ...ClientOption) *Client {
 		config.baseURL = "https://api.deepseek.com"
 	}
 
-	return &Client{
+	httpClient := internal.NewHTTPClient(config.baseURL, config.apiKey, config.httpClient.Do, config.maxRetries)
+
+	client := &Client{
 		config: config,
-		http:   internal.NewHTTPClient(config.baseURL, config.apiKey, config.httpClient.Do, config.maxRetries),
+		http:   httpClient,
 	}
+
+	if config.logger != nil {
+		logLevel := config.logLevel
+
+		httpClient.SetLogHooks(
+			func(method, fullURL string, body []byte) {
+				if logLevel >= LogLevelDebug {
+					config.logger.Debug("",
+						zap.String("method", method),
+						zap.String("url", fullURL),
+						zap.String("req", string(body)),
+					)
+				}
+			},
+			func(method, fullURL string, statusCode int, body []byte, dur time.Duration, err error) {
+				fields := []zap.Field{
+					zap.String("method", method),
+					zap.String("url", fullURL),
+					zap.Int("status", statusCode),
+					zap.Duration("duration", dur),
+				}
+				if err != nil {
+					fields = append(fields, zap.Error(err))
+					config.logger.Error("", fields...)
+					return
+				}
+				if logLevel >= LogLevelDebug {
+					fields = append(fields, zap.String("resp", string(body)))
+					config.logger.Debug("", fields...)
+				} else {
+					config.logger.Info("", fields...)
+				}
+			},
+		)
+	}
+
+	return client
 }
 
 // buildChatReq 构建 Chat 请求对象，合并 builder 参数和 options
