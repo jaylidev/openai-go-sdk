@@ -1,18 +1,24 @@
 package openai
 
-import "net/http"
+import (
+	"net/http"
+
+	"go.uber.org/zap"
+)
 
 // Model 模型枚举
 type Model string
 
 const (
 	DeepSeekV4Pro    Model = "deepseek-v4-pro"
+	DeepSeekV4Flash  Model = "deepseek-v4-flash"
 	DeepSeekReasoner Model = "deepseek-reasoner"
 	DeepSeekChat     Model = "deepseek-chat"
 )
 
 var defaultBaseURLs = map[Model]string{
 	DeepSeekV4Pro:    "https://api.deepseek.com",
+	DeepSeekV4Flash:  "https://api.deepseek.com",
 	DeepSeekReasoner: "https://api.deepseek.com",
 	DeepSeekChat:     "https://api.deepseek.com",
 }
@@ -22,6 +28,14 @@ type HTTPDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// LogLevel 日志级别
+type LogLevel int
+
+const (
+	LogLevelInfo  LogLevel = iota
+	LogLevelDebug
+)
+
 // ClientConfig 客户端配置（不对外暴露字段）
 type ClientConfig struct {
 	model      Model
@@ -29,6 +43,8 @@ type ClientConfig struct {
 	baseURL    string
 	httpClient HTTPDoer
 	maxRetries int
+	logger     *zap.Logger
+	logLevel   LogLevel
 }
 
 func (c ClientConfig) BaseURL() string      { return c.baseURL }
@@ -72,5 +88,19 @@ func WithHTTPClient(client *http.Client) ClientOption {
 func WithMaxRetries(n int) ClientOption {
 	return func(c *ClientConfig) {
 		c.maxRetries = n
+	}
+}
+
+// WithLogger 设置 zap.Logger（可选，用于 debug 日志）
+func WithLogger(logger *zap.Logger) ClientOption {
+	return func(c *ClientConfig) {
+		c.logger = logger
+	}
+}
+
+// WithLogLevel 设置日志级别，默认 Info
+func WithLogLevel(level LogLevel) ClientOption {
+	return func(c *ClientConfig) {
+		c.logLevel = level
 	}
 }
